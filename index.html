@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlphaChat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- HOMEPAGE -->
+        <div id="homeScreen">
+            <h1 class="neon-title">ALPHACHAT</h1>
+            <h2 class="subtitle">enter access code</h2>
+            <input type="text" id="roomInput" placeholder="e.g. truth, chaos, confessions" />
+            <button id="enterBtn">ENTER</button>
+        </div>
+
+        <!-- CHAT INTERFACE -->
+        <div id="chatInterface" style="display: none;">
+            <h1 class="neon-title">ALPHACHAT</h1>
+            <div class="server-status" id="serverStatus">Connected to #serverroom</div>
+
+            <div class="chat-wrapper">
+                <div class="feed" id="feed"></div>
+                <div id="typing-indicator"></div>
+                <div class="input-area">
+                    <textarea id="message" placeholder="express, anonymously."></textarea>
+                    <button id="sendButton">SEND</button>
+                </div>
+                <div id="status"></div>
+            </div>
+
+            <div class="footer">Anonymity is sacred 🛡️ Built with chaos by Brody.</div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
