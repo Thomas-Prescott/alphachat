@@ -29,7 +29,7 @@ function sendMessage() {
     const msg = document.getElementById('message').value.trim();
     if (!msg || !currentRoom) return;
 
-    fetch(`http://localhost:3000/message/${currentRoom}`, {
+    fetch(`https://alphachat-pxaf.onrender.com/message/${currentRoom}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,7 +53,7 @@ function sendMessage() {
 // 🧲 Fetch messages for current room
 function fetchMessages() {
     if (!currentRoom) return;
-    fetch(`http://localhost:3000/messages/${currentRoom}`)
+    fetch(`https://alphachat-pxaf.onrender.com/messages/${currentRoom}`)
         .then(res => res.json())
         .then(data => {
             const feed = document.getElementById('feed');
@@ -81,7 +81,7 @@ messageInput.addEventListener('input', () => {
     }, 1000);
 
     // Notify server you're typing
-    fetch(`http://localhost:3000/typing`, {
+    fetch(`https://alphachat-pxaf.onrender.com/typing`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,7 +95,7 @@ messageInput.addEventListener('input', () => {
 function pollTyping() {
     if (!currentRoom) return;
 
-    fetch(`http://localhost:3000/typing-status?room=${currentRoom}`)
+    fetch(`https://alphachat-pxaf.onrender.com/typing-status?room=${currentRoom}`)
         .then(res => res.json())
         .then(data => {
             if (data.typingUser && data.typingUser !== userID) {
