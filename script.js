@@ -26,8 +26,25 @@ const fingerprint = getDeviceFingerprint();
 
 // 💬 Send a message
 function sendMessage() {
-    const msg = document.getElementById('message').value.trim();
-    if (!msg || !currentRoom) return;
+    const msgField = document.getElementById('message');
+    if (!msgField) {
+        console.error("❌ Message input not found");
+        return;
+    }
+
+    const msg = msgField.value.trim();
+
+    if (!msg) {
+        console.warn("⚠️ Empty message");
+        return;
+    }
+
+    if (!currentRoom) {
+        console.error("❌ No room joined");
+        return;
+    }
+
+    console.log("📤 Sending message:", { currentRoom, msg, userID });
 
     fetch(`https://alphachat-pxaf.onrender.com/message/${currentRoom}`, {
         method: 'POST',
@@ -38,16 +55,20 @@ function sendMessage() {
             fingerprint: fingerprint
         })
     })
-        .then(res => res.text())
-        .then(text => {
-            document.getElementById('status').textContent = "message sent";
-            document.getElementById('message').value = "";
-            fetchMessages();
-        })
-        .catch(err => {
-            document.getElementById('status').textContent = "FAILED TO SEND MESSAGE";
-            console.error(err);
-        });
+    .then(res => {
+        if (!res.ok) throw new Error("Network response was not ok");
+        return res.text();
+    })
+    .then(text => {
+        console.log("✅ Server replied:", text);
+        document.getElementById('status').textContent = "message sent";
+        msgField.value = "";
+        fetchMessages();
+    })
+    .catch(err => {
+        console.error("❌ Failed to send message:", err);
+        document.getElementById('status').textContent = "FAILED TO SEND MESSAGE";
+    });
 }
 
 // 🧲 Fetch messages for current room
