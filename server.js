@@ -2,72 +2,85 @@ const express = require('express');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config(); // Load .env
+const mongoose = require('mongoose');
+
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
-const serverMessages = {}; // { roomName: [ { userId, text, time, fingerprint } ] }
-const typingStatus = {};   // { roomName: { user: userId, time: timestamp } }
+// 🔌 Connect to MongoDB Atlas
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log("✅ Connected to MongoDB Atlas"))
+.catch(err => console.error("❌ MongoDB connection error:", err));
 
-// 📨 Get all messages from a room
-app.get('/messages/:room', (req, res) => {
-    const room = req.params.room;
-    console.log(`📩 Fetching messages for room: #${room}`);
-    res.json(serverMessages[room] || []);
+// 💾 Define message schema and model
+const messageSchema = new mongoose.Schema({
+    userId: String,
+    text: String,
+    time: String,
+    fingerprint: String,
+    room: String
 });
 
-// 📩 Post a message to a room
-app.post('/message/:room', (req, res) => {
+const Message = mongoose.model("Message", messageSchema);
+
+// In-memory typing tracker (no need for DB)
+const typingStatus = {};
+
+// 📥 Get all messages from a room
+app.get('/messages/:room', async (req, res) => {
+    try {
+        const messages = await Message.find({ room: req.params.room });
+        res.json(messages);
+    } catch (err) {
+        res.status(500).send("Failed to fetch messages.");
+    }
+});
+
+// 📤 Post a new message
+app.post('/message/:room', async (req, res) => {
     const room = req.params.room;
     const { message, userId, fingerprint } = req.body;
 
-    console.log("🆕 Incoming message:", { room, message, userId, fingerprint });
-
     if (!room || !message || !userId) {
-        console.log("❌ Missing data in POST /message/:room");
         return res.status(400).send("Missing data");
     }
 
-    if (!serverMessages[room]) serverMessages[room] = [];
-
-    const msgObject = {
-        userId: userId,
+    const msgObject = new Message({
+        userId,
         text: message.trim(),
-        time: new Date().toLocaleTimeString()
-    };
-
-    serverMessages[room].push(msgObject);
-
-    const logEntry = `[${msgObject.time}] (${msgObject.userId}) ${msgObject.text} :: ${fingerprint || 'no fingerprint'} [#${room}]`;
-    fs.appendFile('messages.txt', logEntry + '\n', err => {
-        if (err) console.error("❌ Error writing log:", err);
+        time: new Date().toLocaleTimeString(),
+        fingerprint,
+        room
     });
 
-    console.log("✅ Message saved and logged.");
-    res.send("Message received");
+    try {
+        await msgObject.save();
+        res.send("Message received");
+    } catch (err) {
+        console.error("❌ DB Save Error:", err);
+        res.status(500).send("Failed to save message");
+    }
 });
 
-// ⌨️ Track typing status in a room
+// ⌨️ Track typing
 app.post('/typing', (req, res) => {
     const { userId, room } = req.body;
-    if (!room || !userId) return res.sendStatus(400);
-
-    typingStatus[room] = {
-        user: userId,
-        time: Date.now()
-    };
-
+    typingStatus[room] = { user: userId, time: Date.now() };
     res.sendStatus(200);
 });
 
-// 🔍 Get typing status for a room
+// 🔍 Get typing status
 app.get('/typing-status', (req, res) => {
     const { room } = req.query;
     const entry = typingStatus[room];
-
     if (entry && Date.now() - entry.time < 3000) {
         res.json({ typingUser: entry.user });
     } else {
@@ -75,7 +88,12 @@ app.get('/typing-status', (req, res) => {
     }
 });
 
-// 🚀 Start the server
+// 🌐 Optional homepage route
+app.get('/', (req, res) => {
+    res.send("👋 Welcome to AlphaChat API");
+});
+
+// 🚀 Start server
 app.listen(port, () => {
-    console.log(`🚀 AlphaChat backend running at http://localhost:${port}`);
+    console.log(`🚀 AlphaChat live at http://localhost:${port}`);
 });
